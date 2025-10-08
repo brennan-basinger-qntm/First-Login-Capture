@@ -1,22 +1,89 @@
-# First-Login-Capture
-Captures data pertaining to why Windows Autopilot is failing to preprovision
+First-Login-Capture
 
+A small, repeatable capture kit to help diagnose first-login issues on freshly Autopilot-provisioned Windows devices (e.g., WebView2 popups impacting Teams / new Outlook). It collects versions, services/tasks status, IME logs, EdgeUpdate logs, event logs, app logs, and Autopilot artifacts across three phases so endpoint engineering can see exactly what changed.
+
+Table of Contents
+
+What this captures
+
+Before you start
+
+Quick Start (copy/paste)
+
+Step-by-Step Instructions
+
+Script Content
+
+Run the Three Phases
+
+Output & What to Send
+
+Tips & Notes
+
+Troubleshooting
+
+What this captures
+
+WebView2 presence & version (HKLM 64/32-bit + HKCU) and on-disk binaries.
+
+Microsoft Edge version + Edge Update service & scheduled task health.
+
+Intune IME logs and a quick “failing Win32 app” summary.
+
+EdgeUpdate raw logs (why installs/updates succeeded or failed).
+
+Event logs (MDM/Autopilot provisioning, Application, System).
+
+Teams / new Outlook local logs & AppX package versions.
+
+Autopilot provisioning artifacts and an MDM diagnostics CAB.
+
+Each phase is zipped for easy sharing.
+
+Before you start
+
+Use a freshly provisioned device that just completed Windows Autopilot.
+
+Sign in once with the user account.
+
+Do not open Microsoft Edge yet (we want to capture failure state first).
+
+Quick Start (copy/paste)
+
+Open PowerShell as Administrator, then run:
+
+# 1) Create the working folder
+New-Item -ItemType Directory -Force -Path C:\QTM-FirstLoginCapture | Out-Null
+
+# 2) Allow script execution for this window only
+Set-ExecutionPolicy -Scope Process Bypass -Force
+
+# 3) Create the script (paste everything between @' and '@ inclusive)
+$script = @'
+<-- paste the script from the "Script Content" section here (including this @' line and the closing '@ on its own line) -->
+'@
+
+# 4) Save the script to disk
+$script | Set-Content -Path C:\QTM-FirstLoginCapture\FirstLoginCapture.ps1 -Encoding UTF8
+
+
+Now skip to Run the Three Phases
+.
+
+Step-by-Step Instructions
 1) Open PowerShell as Administrator
+
 Start → type powershell → right-click Windows PowerShell (or PowerShell 7) → Run as administrator.
 
 2) Create the working folder
 New-Item -ItemType Directory -Force -Path C:\QTM-FirstLoginCapture | Out-Null
 
-3) Allow Execution in this window only
+3) Allow execution in this window only
 Set-ExecutionPolicy -Scope Process Bypass -Force
 
-4) Put the script content into a variable:
-Paste everything between @' and '@ inclusive (those two lines mark the start and end).
-The closing '@ must be alone on its own line - nothing else on that line:
+4) Put the script content into a variable
 
-
-
-# -------------- SCRIPT START -------------------
+Paste everything between @' and '@ inclusive. The closing '@ must be alone on its own line—nothing else on that line.
 
 $script = @'
 <# 
@@ -155,48 +222,77 @@ Compress-Archive -Path $Out\* -DestinationPath $Zip -Force
 Write-Host "Capture complete: $Zip"
 '@
 
-
-# ----------------- END SCRIPT ---------------------
-
-
-# 5) In the same powershell window, run the following command to save the script variable we created to a .ps1 file
+5) Save the script to a .ps1 file
 $script | Set-Content -Path C:\QTM-FirstLoginCapture\FirstLoginCapture.ps1 -Encoding UTF8
 
-# 6) Verify the file exists:
+6) Verify the file exists
 Get-Item C:\QTM-FirstLoginCapture\FirstLoginCapture.ps1
 
-# 7) Run the three phases
-# Phase A - Baseline (before opeining anything)
+Script Content
+
+For convenience, the full script is included in the block above (Step 4).
+If you prefer, save it directly as FirstLoginCapture.ps1 using your editor of choice.
+
+Run the Three Phases
+
+“Repro” = reproduce the issue on purpose. Here, that means: first logon → open Teams and new Outlook (don’t open Edge yet) → if you see a WebView2 prompt/error, that’s the failure we want to capture.
+
+Phase A — Baseline (before opening anything)
 cd C:\QTM-FirstLoginCapture
 .\FirstLoginCapture.ps1 -Phase Baseline
 
-# Phase B — Reproduce the issue, then capture
-# Manually open Teams, then new Outlook (do not open Edge yet).
-# If you see a WebView2 prompt or app failure → take a screenshot.
-# Capture:
+Phase B — Reproduce the issue, then capture
+
+Manually open Teams, then new Outlook (do not open Edge yet).
+
+If you see a WebView2 prompt or app failure → take a screenshot.
+
+Capture:
+
 .\FirstLoginCapture.ps1 -Phase PostRepro
 
-# Phase C — Trigger Edge updater, then capture:
-Start-Process "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" "edge://settings/help"
+Phase C — Trigger Edge updater, then capture
+Start-Process "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" "edge://settings/help"  # Forces Edge/WebView2 update check
 Start-Sleep -Seconds 60
 .\FirstLoginCapture.ps1 -Phase AfterEdgeUpdate
 
-# 8) Grab the output
-# All three ZIPs will be in:
+Output & What to Send
+
+All ZIPs are saved to:
+
 C:\QTM-FirstLoginCapture\
 
-#They’ll look like:
+
+Files you’ll see:
+
 QTM_FirstLogin_YYYYMMDD_HHMMSS_Baseline.zip
+
 QTM_FirstLogin_YYYYMMDD_HHMMSS_PostRepro.zip
+
 QTM_FirstLogin_YYYYMMDD_HHMMSS_AfterEdgeUpdate.zip
 
+Send these three ZIPs (plus your screenshot) to the endpoint engineer with this note:
 
+“Three-phase capture attached: Baseline, PostRepro (right after the Teams/Outlook popup), and AfterEdgeUpdate (after opening Edge → About to trigger updates). Bundles include WebView2/Edge versions, Edge Update services/tasks, IME & EdgeUpdate logs, MDM/Autopilot event logs, Teams/Outlook logs, and Autopilot artifacts. Please compare WebView2 pv under HKLM\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5} / WOW6432Node across phases.”
 
+Tips & Notes
 
+Don’t open Edge until after Phase B — we want to observe the broken state first.
 
+If Teams auto-starts, you can still run Phase A quickly right after the desktop appears.
 
+If your tenant uses a proxy, SYSTEM may not reach update endpoints during ESP—these captures help prove it.
 
+Troubleshooting
 
+Execution policy errors: Re-run Set-ExecutionPolicy -Scope Process Bypass -Force in the same window.
 
+Edge path differs: Confirm Edge at
+C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe.
+If not present, install/repair Edge and re-run Phase C.
 
+IME/EdgeUpdate logs missing: That’s fine; the script leaves a _missing.txt marker so engineering knows.
 
+Access denied copying logs: Make sure you’re running PowerShell as Administrator.
+
+No WebView2 folder found in Baseline but present in AfterEdgeUpdate: that’s often the key insight—Edge Update delivered the runtime only after user logon.
