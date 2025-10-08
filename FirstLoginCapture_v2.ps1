@@ -1,4 +1,6 @@
 <# 
+ FirstLoginCapture_v2.ps1
+ Automatic Path Detection and more detailed context
  Keeping the updated version 2 script as a separate file for now
  FirstLoginCapture_v2.ps1
  Purpose: Improved capture with resilient Edge/WebView2 path detection and extra context.
