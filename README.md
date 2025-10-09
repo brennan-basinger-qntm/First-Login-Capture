@@ -59,14 +59,17 @@ New-Item -ItemType Directory -Force -Path C:\QTM-FirstLoginCapture | Out-Null
 Set-ExecutionPolicy -Scope Process Bypass -Force
 
 # 3) Download or copy FirstLoginCapture_v2.ps1 to C:\QTM-FirstLoginCapture
-#    (If you can’t download files, paste the script from your repo into this path.)
 
-# 4) Run the three phases
+# 4) Run the three phases: P1, P2, P3
+
+# Phase 1: Baseline - Captures logs based on state upon immediately logging in to the newly provisioned device
 cd C:\QTM-FirstLoginCapture
 .\FirstLoginCapture_v2.ps1 -Phase Baseline
-# Reproduce issue: open Teams, then new Outlook (DO NOT open Edge yet).
+
+# Phase 2: Reproduce the issue - open Teams, then new Outlook (DO NOT open Edge yet).
 .\FirstLoginCapture_v2.ps1 -Phase PostRepro
-# Trigger update: Edge -> edge://settings/help (or use the Start-Process line below), wait ~60s.
+
+# Phase 3: Trigger update: Edge -> edge://settings/help (or use the Start-Process line below), wait ~60s.
 Start-Process "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" "edge://settings/help"; Start-Sleep -Seconds 60
 .\FirstLoginCapture_v2.ps1 -Phase AfterEdgeUpdate
 ```
