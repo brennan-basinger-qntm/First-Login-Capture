@@ -114,7 +114,7 @@ You’ll see:
 - `QTM_FirstLogin_YYYYMMDD_HHMMSS_PostRepro.zip`
 - `QTM_FirstLogin_YYYYMMDD_HHMMSS_AfterEdgeUpdate.zip`
 
-**Send these three ZIPs** (plus any screenshots) to endpoint engineering with this note:
+**Send these three ZIPs** (plus any screenshots) to Intune and Autopilot group on Teams with this note:
 
 > “Three-phase capture attached: **Baseline**, **PostRepro** (right after the Teams/Outlook popup), and **AfterEdgeUpdate** (after opening Edge → *About* to trigger updates). Bundles include WebView2/Edge versions, Edge Update services/tasks, IME & EdgeUpdate logs, MDM/Autopilot event logs, Teams/Outlook logs, Autopilot artifacts, and OS/policy/proxy context. Please compare WebView2 `pv` under `HKLM\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}` / `WOW6432Node` across phases.”
 
